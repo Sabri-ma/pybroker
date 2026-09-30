@@ -74,6 +74,27 @@ def test_non_string_queue_name_is_rejected() -> None:
         broker.create_queue(123)  # type: ignore[arg-type]
 
 
+def test_delete_existing_queue() -> None:
+    broker = Broker()
+
+    broker.create_queue("emails")
+
+    result = broker.delete_queue("emails")
+
+    assert result is True
+    assert broker.queue_exists("emails") is False
+    assert broker.queue_count == 0
+
+
+def test_delete_missing_queue_returns_false() -> None:
+    broker = Broker()
+
+    result = broker.delete_queue("missing")
+
+    assert result is False
+    assert broker.queue_count == 0
+
+
 def test_publish_creates_queue_automatically() -> None:
     broker = Broker()
     message = Message(payload="hello")
@@ -179,3 +200,41 @@ def test_consume_missing_queue_returns_none() -> None:
     broker = Broker()
 
     assert broker.consume("missing") is None
+
+def test_list_queues_when_empty() -> None:
+    broker = Broker()
+
+    assert broker.list_queues() == []
+
+
+def test_list_queues() -> None:
+    broker = Broker()
+
+    broker.create_queue("emails")
+    broker.create_queue("payments")
+    broker.create_queue("notifications")
+
+    assert broker.list_queues() == [
+        "emails",
+        "payments",
+        "notifications",
+    ]
+def test_queue_size() -> None:
+    broker = Broker()
+
+    broker.publish(
+        "emails",
+        Message(payload="first"),
+    )
+    broker.publish(
+        "emails",
+        Message(payload="second"),
+    )
+
+    assert broker.queue_size("emails") == 2
+
+
+def test_missing_queue_size_is_zero() -> None:
+    broker = Broker()
+
+    assert broker.queue_size("missing") == 0

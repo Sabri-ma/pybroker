@@ -51,6 +51,23 @@ class Broker:
 
         return normalized_name in self._queues
 
+    def delete_queue(self, name: str) -> bool:
+        """
+        Delete a queue.
+
+        Returns True if the queue existed and was deleted.
+        Returns False if the queue did not exist.
+        """
+
+        normalized_name = self._normalize_queue_name(name)
+
+        if normalized_name not in self._queues:
+            return False
+
+        del self._queues[normalized_name]
+
+        return True
+
     def publish(
         self,
         queue_name: str,
@@ -85,7 +102,25 @@ class Broker:
             return None
 
         return queue.consume()
+    def list_queues(self) -> list[str]:
+        """
+        Return the names of all registered queues.
+        """
 
+        return list(self._queues.keys())
+    def queue_size(self, name: str) -> int:
+        """
+        Return the number of messages waiting in a queue.
+
+        Returns 0 if the queue does not exist.
+        """
+
+        queue = self.get_queue(name)
+
+        if queue is None:
+            return 0
+
+        return queue.size
     @property
     def queue_count(self) -> int:
         """
